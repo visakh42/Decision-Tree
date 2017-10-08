@@ -9,7 +9,7 @@ import sys
 import math
 
 def entropy(prob):
-    entropy_value = -1*prob*math.log2(prob)
+    entropy_value = -1*((prob*math.log2(prob)) + ((1-prob)*math.log2(1-prob)))
     return entropy_value
 
 def probability_calc(data_set_for_prob):
@@ -29,11 +29,9 @@ def info_gain(data_set, feature,split_value):
     for j in range(0,len(split_data)):
         if len(split_data[j])>0:
             count_pos,count_neg = counter(split_data[j])
-            if(count_pos == 0 or count_neg == 0):
-                infogain = 0
-            else:
+            if not (count_pos == 0 or count_neg == 0):
                 current_entropy=entropy(probability_calc(split_data[j]))
-                prob2 = len(split_data)/len(data_set)
+                prob2 = len(split_data[j])/len(data_set)
                 infogain -= (prob2 * current_entropy)            
     return infogain            
     
@@ -101,8 +99,6 @@ def subtree(training_set,recursion_level = 0):
             tree = tree + "    Positive"
         else:
             tree = tree + "    Negative"
-        #tree = tree + "["+ str(count_pos) +","+str(count_neg) + "]"
-        #return count_pos,count_neg,"leaf"
     else:
         best_infogain = 0
         current_infogain=0
@@ -133,15 +129,13 @@ def subtree(training_set,recursion_level = 0):
                 tree = tree + "    Positive"
             else:
                 tree = tree + "    Negative"
-            #tree = tree + "["+ str(count_pos)+","+str(count_neg)+ "]"
-            #return count_pos,count_neg,"leaf"
         else:
             flagging = ""
             if feature_details[best_feature] == "real":
                 divided_tree = splitter(training_set,best_feature,threshhold[best_feature])
             else:
                 flagging = "nominal"
-                nominal_feature_flag[best_feature]=1
+                #nominal_feature_flag[best_feature]=1
                 divided_tree = splitter(training_set,best_feature,None)
             recursion_level += 1
             for i in range(0,len(divided_tree)):
@@ -202,6 +196,7 @@ if __name__ == "__main__":
     initial_data = train_data[2]
     m=10
     tree = ""
-    #k = splitter(initial_data,'exang',None)
     subtree(initial_data)
     print(tree)
+
+    
