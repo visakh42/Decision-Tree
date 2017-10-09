@@ -82,7 +82,8 @@ def counter(training_set_for_counting):
     negative_no = total_no - positive_no
     return positive_no, negative_no
 
-def subtree(training_set,recursion_level = 0):
+def subtree(training_set,recursion_level = 0,decisiontree='start'):
+    global nodecollection
     global tree
     global nominal_feature_flag
     global best_threshhold
@@ -97,8 +98,12 @@ def subtree(training_set,recursion_level = 0):
     if(flag == 1):
         if(count_pos>count_neg):
             tree = tree + "    Positive"
+            node= [decisiontree,"Positive",0,0]
+            nodecollection.append(node)
         else:
             tree = tree + "    Negative"
+            node = [decisiontree,"Negative",0,0]
+            nodecollection.append(node)
     else:
         best_infogain = 0
         current_infogain=0
@@ -127,34 +132,84 @@ def subtree(training_set,recursion_level = 0):
             count_pos,count_neg = counter(training_set)
             if(count_pos>count_neg):
                 tree = tree + "    Positive"
+                node=[decisiontree,"Positive",0,0]
+                nodecollection.append(node)
             else:
                 tree = tree + "    Negative"
+                node=[decisiontree,"Negative",0,0]
+                nodecollection.append(node)
         else:
             flagging = ""
+            recursion_level += 1
             if feature_details[best_feature] == "real":
                 divided_tree = splitter(training_set,best_feature,threshhold[best_feature])
             else:
                 flagging = "nominal"
                 #nominal_feature_flag[best_feature]=1
                 divided_tree = splitter(training_set,best_feature,None)
-            recursion_level += 1
             for i in range(0,len(divided_tree)):
                 tree = tree + "\n"
                 for j in range(0,recursion_level):
                     tree = tree + "|  "
                 if(flagging=="nominal"):
+                    factor = "="
+                    split_condition = feature_details[best_feature][0][i]
                     tree = tree + str(best_feature) + "=" + str(feature_details[best_feature][0][i])
                 else:
                     if(i==0):
+                        factor = "<="
+                        split_condition = threshhold[best_feature]
                         tree = tree + str(best_feature) + "<=" + str(threshhold[best_feature])
                     else:
+                        factor = ">"
+                        split_condition = threshhold[best_feature]
                         tree = tree + str(best_feature) + ">" + str(threshhold[best_feature])
                 c1,c2 = counter(divided_tree[i])
                 tree = tree + " ["+ str(c1) + ","+ str(c2) +"]"
-                subtree(divided_tree[i],recursion_level)
-    
-            
-
+                node=[decisiontree,best_feature,factor,split_condition]
+                nodecollection.append(node)
+                subtree(divided_tree[i],recursion_level,node)     
+                
+def classification(data_line,parentnode="start"):
+    global accuracy_count
+    global data_count
+    for nodes in nodecollection:
+        if nodes[0] == parentnode:
+            if nodes[1]=="Positive":
+                print(data_count,"Actual:",data_line[-1]," Predicted :Positive\n")
+                if data_line[-1] == "positive":
+                            accuracy_count+=1
+            elif nodes[1]=="Negative":
+                print(data_count,"Actual:",data_line[-1]," Predicted : Negative\n")
+                if data_line[-1] == "negative":
+                            accuracy_count+=1
+            else:
+                indexer= feature_list.index(nodes[1])
+                if nodes[2]== "=":
+                    if nodes[3] == data_line[indexer]:
+                        classification(data_line,nodes)
+                elif nodes[2]==">":
+                    if float(nodes[3]) < float(data_line[indexer]):
+                        classification(data_line,nodes)
+                elif nodes[2]=="Positive":
+                    print(data_line,": Positive")
+                elif nodes[2]=="Negative":
+                    print(data_line,": Negative")
+                elif nodes[2]== "<=": 
+                    if float(nodes[3]) >= float(data_line[indexer]):
+                        classification(data_line,nodes)
+ 
+def prediction(data_set):
+    print("********************  Predictions  *********************")
+    global data_count
+    data_count=1
+    for data in data_set:
+        classification(data)
+        data_count+=1
+    accuracy = accuracy_count/len(data_set)
+    print("The data set had ",len(data_set),"instances. The model predicted ", accuracy_count," correctly")
+    print("The accuracy with the data set is ",accuracy)         
+                    
 def readtrain(train_name):
     trainarff = open(train_name,'r')
     trainlines = []
@@ -185,6 +240,10 @@ if __name__ == "__main__":
     #train_name = str(sys.argv[1])
     #test_name = str(sys.argv[2])
     #m = int(sys.argv[3])
+    m=10
+    data_count = 1
+    accuracy_count = 0
+    nodecollection = []
     nominal_feature_flag = {}
     best_threshhold = {}
     train_data = readtrain("heart_train.arff")
@@ -192,11 +251,12 @@ if __name__ == "__main__":
     for features in feature_list:
         nominal_feature_flag[features]=0
         best_threshhold[features] = []
-    feature_details = train_data[1]
+    feature_details = train_data[1]   
     initial_data = train_data[2]
-    m=10
     tree = ""
     subtree(initial_data)
     print(tree)
+    test_data = readtrain("heart_test.arff")
+    prediction(test_data[2])
 
     
