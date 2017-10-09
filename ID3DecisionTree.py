@@ -171,28 +171,44 @@ def subtree(training_set,recursion_level = 0,decisiontree='start'):
                 subtree(divided_tree[i],recursion_level,node)     
                 
 def classification(data_line,parentnode="start"):
+    global accuracy_count
+    global data_count
     for nodes in nodecollection:
         if nodes[0] == parentnode:
             if nodes[1]=="Positive":
-                print(data_line,": Positive")
+                print(data_count,"Actual:",data_line[-1]," Predicted :Positive\n")
+                if data_line[-1] == "positive":
+                            accuracy_count+=1
             elif nodes[1]=="Negative":
-                print(data_line,": Negative")
+                print(data_count,"Actual:",data_line[-1]," Predicted : Negative\n")
+                if data_line[-1] == "negative":
+                            accuracy_count+=1
             else:
                 indexer= feature_list.index(nodes[1])
                 if nodes[2]== "=":
-                    if nodes[3] == data_line[0][indexer]:
+                    if nodes[3] == data_line[indexer]:
                         classification(data_line,nodes)
                 elif nodes[2]==">":
-                    if float(nodes[3]) < float(data_line[0][indexer]):
+                    if float(nodes[3]) < float(data_line[indexer]):
                         classification(data_line,nodes)
                 elif nodes[2]=="Positive":
                     print(data_line,": Positive")
                 elif nodes[2]=="Negative":
                     print(data_line,": Negative")
                 elif nodes[2]== "<=": 
-                    if float(nodes[3]) >= float(data_line[0][indexer]):
+                    if float(nodes[3]) >= float(data_line[indexer]):
                         classification(data_line,nodes)
-            
+ 
+def prediction(data_set):
+    print("********************  Predictions  *********************")
+    global data_count
+    data_count=1
+    for data in data_set:
+        classification(data)
+        data_count+=1
+    accuracy = accuracy_count/len(data_set)
+    print("The data set had ",len(data_set),"instances. The model predicted ", accuracy_count," correctly")
+    print("The accuracy with the data set is ",accuracy)         
                     
 def readtrain(train_name):
     trainarff = open(train_name,'r')
@@ -224,6 +240,9 @@ if __name__ == "__main__":
     #train_name = str(sys.argv[1])
     #test_name = str(sys.argv[2])
     #m = int(sys.argv[3])
+    m=10
+    data_count = 1
+    accuracy_count = 0
     nodecollection = []
     nominal_feature_flag = {}
     best_threshhold = {}
@@ -234,10 +253,10 @@ if __name__ == "__main__":
         best_threshhold[features] = []
     feature_details = train_data[1]   
     initial_data = train_data[2]
-    m=10
     tree = ""
     subtree(initial_data)
-    classification([initial_data[5]])
     print(tree)
+    test_data = readtrain("heart_test.arff")
+    prediction(test_data[2])
 
     
