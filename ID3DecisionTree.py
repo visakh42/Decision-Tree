@@ -7,6 +7,8 @@ Created on Fri Sep 29 15:12:16 2017
 
 import sys
 import math
+import random
+import matplotlib.pyplot as plt
 
 def entropy(prob):
     entropy_value = -1*((prob*math.log2(prob)) + ((1-prob)*math.log2(1-prob)))
@@ -235,6 +237,69 @@ def readtrain(train_name):
     returned_training_data = (data_feature, data_feature_value,data_training)
     return returned_training_data
 
+def training_size_variation(data_for_random,testing_accuracy):
+    global data_count
+    global accuracy_count
+    global nodecollection
+    global nominal_feature_flag 
+    global best_threshhold
+    small_data = []
+    accuracy_graph = []
+    k = [0.05,0.1,0.2,0.5,1] 
+    for i in k:
+        data_count = 1
+        accuracy_count = 0
+        nodecollection = []
+        nominal_feature_flag = {}
+        best_threshhold = {}
+        for features in feature_list:
+            nominal_feature_flag[features]=0
+            best_threshhold[features] = []
+        lim = i*len(data_for_random)
+        small_data=data_for_random[0:int(lim)]
+        subtree(small_data)
+        accuracy_count=0
+        data_count=1
+        prediction(testing_accuracy)
+        accuracy_graph.append(accuracy_count/len(testing_accuracy))
+    print(accuracy_graph)
+    plt.plot(k,accuracy_graph)
+    plt.xlabel("Training size in percentage")
+    plt.ylabel("Test accuracy")
+    plt.title("Accuracy variation with testing data size")
+    
+def leaf_size_variation(data_for_random,testing_accuracy):
+    global data_count
+    global accuracy_count
+    global nodecollection
+    global nominal_feature_flag 
+    global best_threshhold
+    global m
+    accuracy_graph = []
+    k = [2,5,10,20] 
+    for i in k:
+        data_count = 1
+        accuracy_count = 0
+        nodecollection = []
+        nominal_feature_flag = {}
+        best_threshhold = {}
+        for features in feature_list:
+            nominal_feature_flag[features]=0
+            best_threshhold[features] = []        
+        m = i
+        subtree(data_for_random)
+        accuracy_count=0
+        data_count=1
+        prediction(testing_accuracy)
+        accuracy_graph.append(accuracy_count/len(testing_accuracy))
+    print(accuracy_graph)
+    plt.plot(k,accuracy_graph)
+    plt.xlabel("Limit of number of instance in leaf")
+    plt.ylabel("Test accuracy")
+    plt.title("Accuracy variation with leaf size")
+    
+    
+        
 
 if __name__ == "__main__":
     #train_name = str(sys.argv[1])
@@ -258,5 +323,8 @@ if __name__ == "__main__":
     print(tree)
     test_data = readtrain("heart_test.arff")
     prediction(test_data[2])
+    training_size_variation(initial_data,test_data[2])
+    leaf_size_variation(initial_data,test_data[2])
+    
 
     
